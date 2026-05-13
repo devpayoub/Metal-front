@@ -3,16 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogIn, LayoutDashboard, LogOut, ShoppingCart } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { Menu, X } from "lucide-react";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user, isAdmin, signOut } = useAuth();
-  const { count: cartCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,8 +23,6 @@ export function Navbar() {
     { path: "/about", label: "À propos" },
     { path: "/services", label: "Services" },
     { path: "/projects", label: "Projets" },
-    { path: "/shop", label: "Boutique" },
-    { path: "/news", label: "Actualités" },
     { path: "/contact", label: "Contact" },
   ];
 
@@ -37,133 +31,96 @@ export function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        solid ? "bg-secondary shadow-lg" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        solid
+          ? "bg-secondary/95 backdrop-blur-md shadow-lg shadow-black/20"
+          : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-[1fr_auto_1fr] items-center h-20 gap-4">
-          <Link href="/" className="flex items-center justify-self-start">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
             <img
               src="/logo.png"
               alt="MIS Metal Construction"
-              className="h-14 w-auto object-contain"
+              className="h-12 w-auto object-contain bg-white/95 rounded-md p-1.5"
             />
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 justify-self-center">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                href={link.path}
-                className={`text-white hover:text-primary transition-colors ${
-                  pathname === link.path ? "text-primary" : ""
-                }`}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden md:flex items-center gap-5 justify-self-end">
-            <Link
-              href="/cart"
-              className="relative text-white hover:text-primary transition-colors"
-              aria-label="Panier"
-            >
-              <ShoppingCart size={20} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1.5 -right-2 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            {user ? (
-              <div className="flex items-center gap-3">
-                {isAdmin ? (
-                  <Link
-                    href="/admin"
-                    className="bg-primary text-white px-5 py-2 rounded hover:brightness-110 transition flex items-center gap-2"
-                  >
-                    <LayoutDashboard size={16} /> Admin
-                  </Link>
-                ) : (
-                  <Link
-                    href="/client"
-                    className="bg-primary text-white px-5 py-2 rounded hover:brightness-110 transition"
-                  >
-                    Espace client
-                  </Link>
-                )}
-                <button
-                  onClick={() => signOut()}
-                  title="Déconnexion"
-                  className="text-white/60 hover:text-white p-2"
-                >
-                  <LogOut size={18} />
-                </button>
-              </div>
-            ) : (
-              <Link
-                href="/auth"
-                className="bg-primary text-white px-6 py-2 rounded hover:brightness-110 transition flex items-center gap-2"
-              >
-                <LogIn size={16} /> Connexion
-              </Link>
-            )}
-          </div>
-
-          <div className="md:hidden flex items-center gap-4 justify-self-end">
-            <Link href="/cart" className="relative text-white" aria-label="Panier">
-              <ShoppingCart size={24} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            <button
-              className="text-white"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
-        </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-secondary border-t border-blue-900/40">
-            <div className="flex flex-col py-4 space-y-4">
-              {navLinks.map((link) => (
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.path;
+              return (
                 <Link
                   key={link.path}
                   href={link.path}
-                  className={`text-white hover:text-primary transition-colors px-4 ${
-                    pathname === link.path ? "text-primary" : ""
+                  className={`relative text-sm font-medium tracking-wide transition-colors duration-300 py-2 ${
+                    isActive
+                      ? "text-primary"
+                      : "text-white/80 hover:text-primary"
                   }`}
-                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+                  )}
                 </Link>
-              ))}
-              {user ? (
+              );
+            })}
+          </div>
+
+          {/* Desktop CTA */}
+          <div className="hidden md:block">
+            <Link
+              href="/contact"
+              className="bg-primary text-white text-sm font-medium px-6 py-2.5 rounded-lg hover:brightness-110 transition-all duration-300 hover:shadow-lg hover:shadow-primary/25"
+            >
+              Demander un devis
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-white p-2"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Menu"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-secondary/95 backdrop-blur-md border-t border-white/10 rounded-b-2xl overflow-hidden">
+            <div className="flex flex-col py-4">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.path;
+                return (
+                  <Link
+                    key={link.path}
+                    href={link.path}
+                    className={`px-6 py-3.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "text-primary bg-white/5"
+                        : "text-white/80 hover:text-primary hover:bg-white/5"
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+              <div className="px-6 pt-4">
                 <Link
-                  href={isAdmin ? "/admin" : "/client"}
-                  className="bg-primary text-white px-6 py-2 rounded hover:brightness-110 transition mx-4 text-center"
+                  href="/contact"
+                  className="block text-center bg-primary text-white text-sm font-medium px-6 py-3 rounded-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {isAdmin ? "Admin" : "Espace client"}
+                  Demander un devis
                 </Link>
-              ) : (
-                <Link
-                  href="/auth"
-                    className="bg-primary text-white px-6 py-2 rounded hover:brightness-110 transition mx-4 text-center"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Connexion
-                </Link>
-              )}
+              </div>
             </div>
           </div>
         )}

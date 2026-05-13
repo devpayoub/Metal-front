@@ -115,7 +115,7 @@ function ClientSpaceInner() {
 
   const displayName =
     profile?.full_name ||
-    (user?.user_metadata?.full_name as string) ||
+    (user?.metadata?.full_name as string) ||
     user?.email?.split("@")[0] ||
     "client";
 

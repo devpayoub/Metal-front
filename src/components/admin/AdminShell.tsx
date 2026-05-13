@@ -4,30 +4,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Package,
-  Tags,
   Wrench,
   Building2,
-  Users,
-  Megaphone,
-  ShoppingBag,
+  Tag,
+  Layers,
+  Mail,
   Settings,
   LogOut,
   Home,
-  Truck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const nav = [
   { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, exact: true },
-  { href: "/admin/products", label: "Produits", icon: Package },
-  { href: "/admin/categories", label: "Catégories", icon: Tags },
-  { href: "/admin/suppliers", label: "Fournisseurs", icon: Truck },
   { href: "/admin/services", label: "Services", icon: Wrench },
   { href: "/admin/projects", label: "Projets", icon: Building2 },
-  { href: "/admin/employers", label: "Équipe", icon: Users },
-  { href: "/admin/announcements", label: "Annonces", icon: Megaphone },
-  { href: "/admin/orders", label: "Commandes", icon: ShoppingBag },
+  { href: "/admin/categories", label: "Catégories", icon: Tag },
+  { href: "/admin/materials", label: "Matériaux", icon: Layers },
+  { href: "/admin/thanks", label: "Lettres de remerciement", icon: Mail },
   { href: "/admin/settings", label: "Paramètres", icon: Settings },
 ];
 

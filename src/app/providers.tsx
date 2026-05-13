@@ -11,6 +11,7 @@ import { ScrollProgress } from "@/components/fx/ScrollProgress";
 import { CursorGlow } from "@/components/fx/CursorGlow";
 import { PageTransition } from "@/components/fx/PageTransition";
 import { Toaster } from "@/components/ui/sonner";
+import { FloatingActions } from "@/components/site/FloatingActions";
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -30,6 +31,7 @@ export function Providers({ children }: { children: ReactNode }) {
               {skipTransition ? children : <PageTransition>{children}</PageTransition>}
             </main>
             {!chromeless && <Footer />}
+            {!chromeless && <FloatingActions />}
           </div>
           <Toaster />
         </CartProvider>

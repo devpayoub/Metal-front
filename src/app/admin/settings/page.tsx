@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Save, MessageCircle, Truck, Building2, DollarSign } from "lucide-react";
+import { Loader2, Save, MessageCircle, Truck, Building2, DollarSign, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
 
@@ -34,6 +34,41 @@ const FIELDS = [
     label: "Nom de la société",
     placeholder: "MIS Metal Construction",
     icon: <Building2 size={16} />,
+    type: "text" as const,
+  },
+  {
+    key: "public.thanks_title",
+    label: "Lettre de remerciement — Titre",
+    placeholder: "Lettre de Remerciement",
+    icon: <Mail size={16} />,
+    type: "text" as const,
+  },
+  {
+    key: "public.thanks_subtitle",
+    label: "Lettre de remerciement — Sous-titre",
+    placeholder: "Un mot de nos clients partenaires.",
+    icon: <Mail size={16} />,
+    type: "text" as const,
+  },
+  {
+    key: "public.thanks_body",
+    label: "Lettre de remerciement — Corps (utilisez \\n pour les sauts de ligne)",
+    placeholder: "Chère équipe de MIS Metal Construction...",
+    icon: <Mail size={16} />,
+    type: "textarea" as const,
+  },
+  {
+    key: "public.thanks_author",
+    label: "Lettre de remerciement — Signature",
+    placeholder: "Direction Technique — SFBT",
+    icon: <Mail size={16} />,
+    type: "text" as const,
+  },
+  {
+    key: "public.thanks_image",
+    label: "Lettre de remerciement — URL de l'image",
+    placeholder: "https://...",
+    icon: <Mail size={16} />,
     type: "text" as const,
   },
 ];
@@ -90,7 +125,7 @@ export default function AdminSettingsPage() {
     <div className="p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-secondary mb-1">Paramètres</h1>
       <p className="text-sm text-gray-500 mb-6">
-        Configurez le passage en caisse (numéro WhatsApp, frais de livraison, devise).
+        Configurez le passage en caisse et la lettre de remerciement affichée sur la page d'accueil.
       </p>
 
       <form onSubmit={handleSave} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
@@ -99,13 +134,23 @@ export default function AdminSettingsPage() {
             <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1">
               {f.icon} {f.label}
             </label>
-            <input
-              type={f.type}
-              value={values[f.key] ?? ""}
-              onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-              placeholder={f.placeholder}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+            {f.type === "textarea" ? (
+              <textarea
+                value={values[f.key] ?? ""}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
+                rows={5}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-y"
+              />
+            ) : (
+              <input
+                type={f.type}
+                value={values[f.key] ?? ""}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+              />
+            )}
           </div>
         ))}
         <div className="pt-2">

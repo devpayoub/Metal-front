@@ -16,12 +16,19 @@ export type Field = {
   required?: boolean;
   group?: string;
   hidden?: boolean; // value carried in form state but not rendered
+  placeholder?: string;
   /** Called when a `select` field's value changes. Return extra field
    *  values to merge into the form (for cross-field auto-fill). */
   onSelect?: (
     value: string,
     current: Record<string, unknown>
   ) => Promise<Record<string, unknown> | void> | Record<string, unknown> | void;
+  /** Called when any text/number input changes. Return field values to merge
+   *  (e.g. auto-fill a slug from the name). */
+  onChange?: (
+    value: string,
+    current: Record<string, unknown>
+  ) => Record<string, unknown> | void;
 };
 
 export type Column<T> = {
@@ -34,6 +41,8 @@ export type Column<T> = {
 type Props<T extends { id: string }> = {
   title: string;
   resource: string; // e.g. "products"
+  /** Override the list endpoint — defaults to `/api/${resource}`. */
+  listPath?: string;
   listKey: "items";
   itemKey: string; // e.g. "product"
   columns: Column<T>[];
@@ -44,6 +53,7 @@ type Props<T extends { id: string }> = {
 export function CrudTable<T extends { id: string }>({
   title,
   resource,
+  listPath,
   listKey,
   itemKey,
   columns,
@@ -59,7 +69,8 @@ export function CrudTable<T extends { id: string }>({
   const load = async () => {
     setLoading(true);
     try {
-      const data = await api.get<Record<string, T[]>>(`/api/${resource}`, true);
+      const path = listPath || `/api/${resource}`;
+      const data = await api.get<Record<string, T[]>>(path, true);
       setRows(data[listKey] || []);
     } catch (e) {
       toast.error((e as Error).message);
@@ -70,7 +81,8 @@ export function CrudTable<T extends { id: string }>({
 
   useEffect(() => {
     load();
-  }, [resource]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resource, listPath]);
 
   const handleSave = async (values: Record<string, unknown>) => {
     setSaving(true);
@@ -250,6 +262,7 @@ function FormModal({
           onChange={(e) => set(f.name, e.target.value)}
           rows={3}
           required={f.required}
+          placeholder={f.placeholder}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
         />
       ) : f.type === "select" ? (
@@ -297,8 +310,19 @@ function FormModal({
           type={f.type === "number" ? "number" : f.type || "text"}
           step={f.type === "number" ? "any" : undefined}
           value={(values[f.name] as string | number | undefined) ?? ""}
-          onChange={(e) => set(f.name, e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setValues((s) => {
+              const next = { ...s, [f.name]: v };
+              if (f.onChange) {
+                const patch = f.onChange(v, s);
+                if (patch) Object.assign(next, patch);
+              }
+              return next;
+            });
+          }}
           required={f.required}
+          placeholder={f.placeholder}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
         />
       )}
@@ -363,6 +387,8 @@ function FormModal({
 function coerce(values: Record<string, unknown>, fields: Field[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields) {
+    // Skip client-only/private fields (prefixed with __).
+    if (f.name.startsWith("__")) continue;
     const v = values[f.name];
     if (v === "" || v === undefined || v === null) continue;
     if (f.type === "number") {

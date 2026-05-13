@@ -376,8 +376,16 @@ export function ContactPage() {
   return (
     <div className="min-h-screen pt-20 bg-gray-50">
 
-      {/* ── Hero ── */}
-      <section className="relative bg-[#07143A] text-white py-24 overflow-hidden">
+      {/* ── Hero (unified style) ── */}
+      <section className="relative bg-gradient-to-br from-secondary via-[#0a1029] to-secondary text-white py-24 overflow-hidden">
+        {/* grid overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "linear-gradient(90deg, white 1px, transparent 1px), linear-gradient(white 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+          }}
+        />
         {/* animated gradient orbs */}
         {[
           { size: 400, x: '10%', y: '-20%', delay: 0 },
@@ -386,16 +394,12 @@ export function ContactPage() {
         ].map((o, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-primary/20 blur-3xl pointer-events-none"
+            className="absolute rounded-full bg-primary/15 blur-3xl pointer-events-none"
             style={{ width: o.size, height: o.size, left: o.x, top: o.y }}
             animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
             transition={{ duration: 6, repeat: Infinity, delay: o.delay, ease: 'easeInOut' }}
           />
         ))}
-
-        {/* grid overlay */}
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)', backgroundSize: '50px 50px' }} />
 
         <div className="container mx-auto px-4 relative z-10 text-center">
           <motion.div
@@ -410,7 +414,7 @@ export function ContactPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-5xl md:text-7xl mb-6 tracking-tight"
+            className="text-5xl md:text-7xl mb-6 tracking-tight font-bold"
           >
             Construisons
             <br />
@@ -676,8 +680,8 @@ export function ContactPage() {
             className="text-center mb-12"
           >
             <span className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">FAQ</span>
-            <h2 className="text-4xl text-secondary mb-4">Questions fréquentes</h2>
-            <p className="text-gray-500">Tout ce qu&apos;il faut savoir avant de commencer.</p>
+            <h2 className="text-4xl md:text-5xl text-secondary mb-4 font-bold">Questions fréquentes</h2>
+            <p className="text-gray-500 text-lg">Tout ce qu&apos;il faut savoir avant de commencer.</p>
           </motion.div>
           <div className="space-y-3">
             {FAQS.map((f, i) => <FaqItem key={i} {...f} index={i} />)}

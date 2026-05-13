@@ -1,272 +1,479 @@
 "use client";
 
-import { motion, AnimatePresence } from 'motion/react';
-import { useEffect, useState } from 'react';
-import { X, ZoomIn, Calendar, MapPin, Loader2 } from 'lucide-react';
-import { api, type Project as ApiProject } from '@/lib/api-client';
+import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useState } from "react";
+import {
+  Calendar,
+  MapPin,
+  Loader2,
+  PlayCircle,
+  ShieldCheck,
+  Layers,
+  Feather,
+  Hammer,
+  Droplets,
+  Sparkles,
+} from "lucide-react";
+import Link from "next/link";
+import { api, type Project as ApiProject, type Category, type Material as ApiMaterial, type ThanksLetter as ApiThanksLetter } from "@/lib/api-client";
+import {
+  PORTFOLIO_CATEGORIES,
+  SHOWCASE_PROJECTS,
+  mapApiProject,
+  img,
+  onImgError,
+  FALLBACK_IMG,
+  type PortfolioProject,
+} from "@/lib/projects-data";
+import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
+import { LettersLightbox } from "@/components/sections/LettersLightbox";
+import { CtaSection } from "@/components/sections/CtaSection";
 
-type UiProject = {
-  id: string;
-  title: string;
-  category: string;
-  image: string;
-  location: string;
-  date: string;
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+type Media = { type: "image" | "video"; src: string; poster?: string };
+
+type Material = {
+  name: string;
   description: string;
+  icon: React.ElementType;
+  image: string;
 };
 
-const mapProject = (p: ApiProject): UiProject => ({
-  id: p.id,
-  title: p.title,
-  category: 'Tous',
-  image: p.cover_url || 'https://placehold.co/800x500?text=Aucune+image',
-  location: p.location || '—',
-  date: p.year ? String(p.year) : new Date(p.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-  description: p.description || '',
-});
+type Testimonial = {
+  name: string;
+  company: string;
+  project: string;
+  feedback: string;
+  logo?: string;
+};
+
+type Certificate = {
+  title: string;
+  issuer: string;
+  year: string;
+  image: string;
+};
+
+/* ------------------------------------------------------------------ */
+/* Data                                                                */
+/* ------------------------------------------------------------------ */
+
+const FILTERS_FALLBACK = ["Tous", ...PORTFOLIO_CATEGORIES];
+
+const MATERIALS_FALLBACK: Material[] = [
+  {
+    name: "Acier Inoxydable",
+    description:
+      "Inox 304 et 316 pour les ouvrages exposés et les finitions haut de gamme : garde-corps, mains courantes, habillages. Résistance maximale à la corrosion.",
+    icon: ShieldCheck,
+    image: img("photo-1518709268805-4e9042af9f23", 800),
+  },
+  {
+    name: "Acier au Carbone",
+    description:
+      "Le matériau de référence pour les charpentes et structures porteuses. Soudures certifiées, profilés IPE, HEA, tubes et tôles fortes.",
+    icon: Hammer,
+    image: img("photo-1504328345606-18bbc8c9d7d1", 800),
+  },
+  {
+    name: "Aluminium",
+    description:
+      "Léger, durable et inoxydable : idéal pour les pergolas, menuiseries, habillages de façade et ouvrages nécessitant finesse et légèreté.",
+    icon: Feather,
+    image: img("photo-1459767129954-1b1c1f9b9ace", 800),
+  },
+  {
+    name: "Fer Forgé",
+    description:
+      "Le savoir-faire traditionnel au service des portails, grilles et rampes ouvragées. Chaque pièce est façonnée à la main dans nos ateliers.",
+    icon: Sparkles,
+    image: img("photo-1449157291145-7efd050a4d0e", 800),
+  },
+  {
+    name: "Acier Galvanisé",
+    description:
+      "Protection par galvanisation à chaud pour les ouvrages extérieurs et industriels : passerelles, clôtures, structures exposées aux intempéries.",
+    icon: Droplets,
+    image: img("photo-1565793298595-6a879b1d9492", 800),
+  },
+  {
+    name: "Métaux Spéciaux",
+    description:
+      "Acier Corten, laiton, cuivre et tôles décoratives découpées au laser pour des réalisations architecturales uniques et signées.",
+    icon: Layers,
+    image: img("photo-1486718448742-163732cd1544", 800),
+  },
+];
+
+const TESTIMONIALS: Testimonial[] = [
+  {
+    name: "Mohamed Ben Salah",
+    company: "SFBT",
+    project: "Hangar de stockage 4 200 m²",
+    feedback:
+      "Une équipe d'une rigueur exemplaire. Le chantier a été livré avant le délai contractuel, avec une qualité de soudure et de finition irréprochable. Nous leur avons depuis confié deux autres sites.",
+    logo: "/logoz/sfbt.svg",
+  },
+  {
+    name: "Sonia Trabelsi",
+    company: "Ennakl Automobiles",
+    project: "Mezzanine showroom",
+    feedback:
+      "Le montage a été réalisé en site occupé sans aucune interruption de notre activité. Professionnalisme, propreté du chantier et respect des engagements : nous recommandons sans réserve.",
+    logo: "/logoz/ennakl.svg",
+  },
+  {
+    name: "Karim Haddad",
+    company: "IMM",
+    project: "Passerelle technique industrielle",
+    feedback:
+      "Du bureau d'études à la pose, tout a été maîtrisé en interne. Les plans d'exécution étaient précis et la structure parfaitement conforme aux normes. Un partenaire industriel fiable.",
+    logo: "/logoz/imm.svg",
+  },
+  {
+    name: "Leïla Mansour",
+    company: "Judy Hôtels",
+    project: "Escalier hélicoïdal & garde-corps",
+    feedback:
+      "L'escalier du lobby est devenu la signature de notre hôtel. Un travail d'orfèvre sur l'acier et le bois, et une écoute remarquable tout au long du projet. Du grand art.",
+    logo: "/logoz/judy.svg",
+  },
+];
+
+const CERTIFICATES_FALLBACK: Certificate[] = [
+  {
+    title: "Lettre de remerciement",
+    issuer: "SFBT – Direction Technique",
+    year: "2024",
+    image: img("photo-1450101499163-c8848c66ca85", 800),
+  },
+  {
+    title: "Certificat de bonne exécution",
+    issuer: "Ennakl Automobiles",
+    year: "2024",
+    image: img("photo-1586281380349-632531db7ed4", 800),
+  },
+  {
+    title: "Lettre de recommandation",
+    issuer: "IMM – Direction Générale",
+    year: "2023",
+    image: img("photo-1521587760476-6c12a4b040da", 800),
+  },
+  {
+    title: "Certification soudure EN 1090",
+    issuer: "Organisme de certification",
+    year: "2022",
+    image: img("photo-1554224155-8d04cb21cd6c", 800),
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+// (onImgError + FALLBACK_IMG imported from @/lib/projects-data)
+
+
+
+/* ------------------------------------------------------------------ */
+/* Mappers — convert API rows into the local shapes used by the page    */
+/* ------------------------------------------------------------------ */
+
+// Pick a lucide icon based on the material title (the API has no icon field).
+function iconForMaterialTitle(title: string): React.ElementType {
+  const t = title.toLowerCase();
+  if (t.includes("inox") || t.includes("inoxydable")) return ShieldCheck;
+  if (t.includes("carbone")) return Hammer;
+  if (t.includes("aluminium") || t.includes("aluminium")) return Feather;
+  if (t.includes("forg")) return Sparkles;
+  if (t.includes("galvan")) return Droplets;
+  return Layers;
+}
+
+function mapApiMaterial(m: ApiMaterial): Material {
+  return {
+    name: m.title,
+    description: m.description || "",
+    icon: iconForMaterialTitle(m.title),
+    image: m.image_url || FALLBACK_IMG,
+  };
+}
+
+function mapApiThanksLetter(l: ApiThanksLetter): Certificate {
+  return {
+    title: l.title,
+    issuer: l.author || "Lettre de remerciement",
+    year: l.created_at ? new Date(l.created_at).getFullYear().toString() : "—",
+    image: l.image_url || FALLBACK_IMG,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 export function ProjectsPage() {
-  const [activeCategory, setActiveCategory] = useState('Tous');
-  const [selectedProject, setSelectedProject] = useState<UiProject | null>(null);
-  const [projects, setProjects] = useState<UiProject[]>([]);
+  const [activeCategory, setActiveCategory] = useState("Tous");
+  const [filters, setFilters] = useState<string[]>(FILTERS_FALLBACK);
+  const [projects, setProjects] = useState<PortfolioProject[]>([]);
+  const [materials, setMaterials] = useState<Material[]>(MATERIALS_FALLBACK);
+  const [certificates, setCertificates] = useState<Certificate[]>(CERTIFICATES_FALLBACK);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<{ items: ApiProject[] }>('/api/projects')
-      .then((d) => setProjects(d.items.map(mapProject)))
-      .finally(() => setLoading(false));
+    // Load categories + projects + materials + thanks letters in parallel;
+    // gracefully fall back to static lists when an endpoint is empty or fails.
+    Promise.all([
+      api.get<{ items: Category[] }>("/api/categories").catch(() => null),
+      api.get<{ items: ApiProject[] }>("/api/projects").catch(() => null),
+      api.get<{ items: ApiMaterial[] }>("/api/materials").catch(() => null),
+      api.get<{ items: ApiThanksLetter[] }>("/api/thanks").catch(() => null),
+    ]).then(([catsRes, projectsRes, materialsRes, thanksRes]) => {
+      if (catsRes?.items?.length) {
+        setFilters(["Tous", ...catsRes.items.map((c) => c.name)]);
+      }
+      if (projectsRes?.items?.length) {
+        setProjects(projectsRes.items.map(mapApiProject));
+      } else {
+        setProjects(SHOWCASE_PROJECTS);
+      }
+      if (materialsRes?.items?.length) {
+        setMaterials(materialsRes.items.map(mapApiMaterial));
+      }
+      if (thanksRes?.items?.length) {
+        setCertificates(thanksRes.items.map(mapApiThanksLetter));
+      }
+      setLoading(false);
+    });
   }, []);
 
-  const categories = ['Tous'];
+  const filtered =
+    activeCategory === "Tous"
+      ? projects
+      : projects.filter((p) => p.category === activeCategory);
 
-
-  const filteredProjects = activeCategory === 'Tous'
-    ? projects
-    : projects.filter(p => p.category === activeCategory);
+  const countFor = (cat: string) =>
+    cat === "Tous" ? projects.length : projects.filter((p) => p.category === cat).length;
 
   return (
     <div className="min-h-screen pt-20">
-      <section className="relative bg-gradient-to-br from-secondary via-[#1a1a1a] to-secondary text-white py-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
+      {/* ============================== HERO ============================== */}
+      <section className="relative bg-[#141414] text-white py-20 overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
+            className="text-4xl md:text-5xl mb-4"
           >
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="text-5xl md:text-6xl mb-6"
-            >
-              Nos <span className="text-primary">Projets</span>
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-xl text-gray-300 max-w-3xl mx-auto"
-            >
-              L&apos;excellence en construction métallique au service de tous les secteurs
-            </motion.p>
-          </motion.div>
+            L&apos;Art de la <span className="text-primary">Construction Métallique</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-gray-300 max-w-2xl mx-auto"
+          >
+            Chaque projet est unique, conçu et fabriqué sur mesure selon vos exigences.
+            Découvrez nos réalisations, nos matériaux et la confiance de nos clients.
+          </motion.p>
         </div>
       </section>
 
-      <section className="py-12 bg-white sticky top-20 z-40 border-b border-gray-200 shadow-sm backdrop-blur-sm bg-white/95">
+      {/* ======================= FILTRES CATÉGORIES ======================= */}
+      <section className="py-6 bg-white border-b border-gray-200">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-wrap gap-3 justify-center"
-          >
-            {categories.map((category, index) => (
-              <motion.button
+          <div className="flex flex-wrap gap-2 justify-center">
+            {filters.map((category) => (
+              <button
                 key={category}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveCategory(category)}
-                className={`px-6 py-3 rounded-lg transition-all ${
+                className={`px-4 py-2 rounded-md text-sm transition-colors ${
                   activeCategory === category
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {category}
-              </motion.button>
+                {!loading && (
+                  <span
+                    className={`ml-2 text-xs ${
+                      activeCategory === category ? "text-white/70" : "text-gray-400"
+                    }`}
+                  >
+                    {countFor(category)}
+                  </span>
+                )}
+              </button>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      <section className="py-20 bg-gray-50">
+      {/* ========================= GALERIE PROJETS ======================== */}
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeCategory}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
             >
               {loading ? (
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-primary" size={40} />
                 </div>
-              ) : filteredProjects.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <div className="text-center text-gray-500 py-20">
-                  Aucun projet pour le moment — revenez bientôt.
+                  Aucun projet dans cette catégorie pour le moment.
                 </div>
               ) : (
-              <div className="columns-1 gap-x-6 space-y-6 sm:columns-2 xl:columns-3">
-                {filteredProjects.map((project, index) => (
-                  <motion.div
-                    key={project.id}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.08 }}
-                    whileHover={{ y: -10, transition: { duration: 0.3 } }}
-                    className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all cursor-pointer group break-inside-avoid-column mb-6"
-                    onClick={() => setSelectedProject(project)}
-                  >
-                    <div className="relative overflow-hidden">
-                      <motion.img
-                        src={project.image}
-                        alt={project.title}
-                        className="w-full h-auto"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.5 }}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filtered.map((project) => {
+                    const hasVideo = project.media.some((m) => m.type === "video");
+                    return (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        hasVideo={hasVideo}
                       />
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/50 to-transparent flex items-center justify-center"
-                      >
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          whileHover={{ scale: 1 }}
-                          className="w-16 h-16 bg-primary rounded-full flex items-center justify-center"
-                        >
-                          <ZoomIn className="text-white" size={28} />
-                        </motion.div>
-                      </motion.div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                        <div className="p-6 text-white w-full">
-                          <div className="text-sm text-primary mb-2">{project.category}</div>
-                          <h3 className="text-xl mb-2">{project.title}</h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-300">
-                            <div className="flex items-center gap-1">
-                              <MapPin size={14} />
-                              <span>{project.location}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar size={14} />
-                              <span>{project.date}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <div className="text-sm text-primary mb-2">{project.category}</div>
-                      <h3 className="text-xl text-secondary mb-3">{project.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <MapPin size={14} />
-                          <span>{project.location}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar size={14} />
-                          <span>{project.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
       </section>
 
-      <AnimatePresence>
-        {selectedProject && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedProject(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25 }}
-              className="bg-white rounded-xl max-w-4xl w-full overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative">
-                <img src={selectedProject.image} alt={selectedProject.title} className="w-full h-96 object-cover" />
-                <button
-                  onClick={() => setSelectedProject(null)}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-all"
-                >
-                  <X className="text-secondary" size={24} />
-                </button>
-              </div>
-              <div className="p-8">
-                <div className="text-sm text-primary mb-2">{selectedProject.category}</div>
-                <h2 className="text-3xl text-secondary mb-4">{selectedProject.title}</h2>
-                <div className="flex items-center gap-6 text-gray-600 mb-6">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={18} className="text-primary" />
-                    <span>{selectedProject.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={18} className="text-primary" />
-                    <span>{selectedProject.date}</span>
+      {/* ========================== MATÉRIAUX ========================== */}
+      <section className="py-20 bg-secondary text-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">
+              Les Matières que Nous <span className="text-primary">Maîtrisons</span>
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Du choix de la matière à la finition, nous sélectionnons le métal le plus
+              adapté à chaque usage, chaque environnement et chaque esthétique.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {materials.map((material) => (
+              <div
+                key={material.name}
+                className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-colors hover:border-primary/50"
+              >
+                <div className="relative h-40 overflow-hidden">
+                  <img
+                    src={material.image}
+                    alt={material.name}
+                    onError={onImgError}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-4 left-4 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary rounded flex items-center justify-center">
+                      <material.icon className="text-white" size={20} />
+                    </div>
+                    <h3 className="text-lg font-bold drop-shadow-md">{material.name}</h3>
                   </div>
                 </div>
-                <p className="text-gray-700 text-lg">{selectedProject.description}</p>
+                <p className="p-5 text-gray-400 text-sm leading-relaxed">
+                  {material.description}
+                </p>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <section className="py-20 bg-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl md:text-5xl mb-6">Prêt à discuter de votre projet ?</h2>
-            <p className="text-xl mb-8 max-w-2xl mx-auto">
-              Donnons vie à votre vision avec nos services experts en construction métallique
-            </p>
-            <motion.a
-              href="/contact"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-block bg-white text-primary px-8 py-4 rounded-lg hover:bg-gray-100 transition-all"
-            >
-              Démarrer mon projet
-            </motion.a>
-          </motion.div>
+            ))}
+          </div>
         </div>
       </section>
+
+      {/* ========================= TÉMOIGNAGES ========================= */}
+      <TestimonialsSection
+        variant="detailed"
+        description="Industriels, promoteurs, hôteliers et particuliers nous confient leurs projets les plus exigeants."
+        testimonials={TESTIMONIALS}
+      />
+
+      {/* ================= CERTIFICATS & LETTRES ================= */}
+      <LettersLightbox
+        eyebrow="Reconnaissance"
+        title={<>Certificats & Lettres de <span className="text-primary">Remerciement</span></>}
+        description=""
+        sectionClassName="bg-secondary text-white relative overflow-hidden"
+        items={certificates.map((c) => ({
+          id: `${c.title}-${c.year}`,
+          title: c.title,
+          meta: `${c.issuer} · ${c.year}`,
+          year: c.year,
+          image: c.image,
+        }))}
+      />
+
+      {/* ============================== CTA ============================== */}
+      <CtaSection
+        title="Un projet sur mesure en tête ?"
+        description="Chaque ouvrage que nous livrons est unique. Parlons du vôtre : étude, conception, fabrication et pose par nos équipes."
+        buttonText="Démarrer mon projet"
+      />
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* ProjectCard — grid card with fixed image height                     */
+/* ------------------------------------------------------------------ */
+function ProjectCard({
+  project,
+  hasVideo,
+}: {
+  project: PortfolioProject;
+  hasVideo: boolean;
+}) {
+  return (
+    <Link href={`/projects/${project.id}`}>
+      <div className="bg-white rounded-lg overflow-hidden shadow border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+        <div className="relative aspect-[4/3]">
+          <img
+            src={project.cover}
+            alt={project.title}
+            onError={onImgError}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-3 left-3 flex gap-2">
+            <span className="bg-black/60 text-white text-xs px-2 py-1 rounded">
+              {project.category}
+            </span>
+            {hasVideo && (
+              <span className="bg-primary text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                <PlayCircle size={12} /> Vidéo
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="p-5">
+          <h3 className="text-lg text-secondary font-bold mb-2 truncate">
+            {project.title}
+          </h3>
+          <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+            {project.description}
+          </p>
+          <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <MapPin size={14} className="text-primary" />
+              <span className="truncate max-w-[100px]">{project.location}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar size={14} className="text-primary" />
+              <span>{project.date}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
