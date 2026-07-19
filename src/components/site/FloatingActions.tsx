@@ -39,7 +39,7 @@ export function FloatingActions() {
     (async () => {
       try {
         const data = await api.get<{ settings?: { whatsapp_number?: string } }>(
-          "/api/settings"
+          "/api/settings/public"
         );
         const num = data?.settings?.whatsapp_number?.trim();
         if (num) setWhatsapp(num.replace(/[^\d]/g, ""));

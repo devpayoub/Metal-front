@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { LogIn, UserPlus, Mail, Lock, User as UserIcon, Loader2 } from "lucide-react";
+import { LogIn, UserPlus, Mail, Lock, User as UserIcon, Loader2, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { api } from "@/lib/api-client";
 import { useAuth, type AuthUser } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ export function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user, isAdmin, rolesLoaded, signIn } = useAuth();
@@ -115,13 +116,21 @@ export function AuthPage() {
             </Field>
             <Field icon={<Lock size={16} />} label="Mot de passe">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="bg-transparent w-full outline-none text-white placeholder-white/30"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                className="text-white/40 hover:text-white/70 shrink-0"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </Field>
 
             <button
