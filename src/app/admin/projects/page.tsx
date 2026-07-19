@@ -141,15 +141,16 @@ function ProjectModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 backdrop-blur-sm overflow-y-auto py-8 px-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/50 backdrop-blur-sm">
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={{ type: "spring", stiffness: 320, damping: 32 }}
+        className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-3xl max-h-[92vh] overflow-y-auto"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-secondary">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl sm:rounded-2xl z-10">
+          <h2 className="text-lg sm:text-xl font-bold text-secondary">
             {initial ? "Modifier le projet" : "Nouveau projet"}
           </h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -157,7 +158,7 @@ function ProjectModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -217,7 +218,7 @@ function ProjectModal({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
               <label className="text-sm font-medium text-gray-700">
                 Galerie ({form.images.length} image(s))
               </label>
@@ -225,7 +226,7 @@ function ProjectModal({
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center gap-2 text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors disabled:opacity-60"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm bg-secondary text-white px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors disabled:opacity-60"
               >
                 {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                 {uploading ? "Envoi..." : "Ajouter des images"}
@@ -250,7 +251,7 @@ function ProjectModal({
                 <span className="text-sm">Cliquer pour ajouter des images</span>
               </button>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {form.images.map((url) => (
                   <div key={url} className="relative group aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -290,18 +291,18 @@ function ProjectModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2 border-t border-gray-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={saving || uploading}
-              className="px-6 py-2.5 rounded-lg bg-primary text-white hover:brightness-110 transition-all disabled:opacity-60 flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-primary text-white hover:brightness-110 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {saving && <Loader2 size={16} className="animate-spin" />}
               {initial ? "Enregistrer" : "Creer le projet"}
@@ -334,7 +335,7 @@ function DeleteModal({ project, onClose, onDeleted }: { project: Project; onClos
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full"
+        className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 max-w-md w-full"
       >
         <h3 className="text-lg font-bold text-secondary mb-2">Supprimer ce projet ?</h3>
         <p className="text-gray-600 text-sm mb-6">
@@ -469,7 +470,7 @@ export default function AdminProjectsPage() {
 
   return (
     <>
-      <div className="p-6 md:p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-secondary flex items-center gap-2">

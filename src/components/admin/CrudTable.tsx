@@ -118,15 +118,15 @@ export function CrudTable<T extends { id: string }>({
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-secondary">{title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-secondary">{title}</h1>
           <p className="text-sm text-gray-500 mt-1">{rows.length} élément(s)</p>
         </div>
         <button
           onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:brightness-110"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:brightness-110"
         >
           <Plus size={16} /> Nouveau
         </button>
@@ -140,45 +140,101 @@ export function CrudTable<T extends { id: string }>({
         ) : rows.length === 0 ? (
           <div className="p-12 text-center text-gray-500">Aucun élément — cliquez sur <b>Nouveau</b> pour en ajouter un.</div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                {columns.map((c) => (
-                  <th key={String(c.key)} className="text-left px-4 py-3 font-medium" style={{ width: c.width }}>
+          <>
+            {/* Desktop table (lg+) */}
+            <table className="hidden lg:table w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  {columns.map((c) => (
+                    <th key={String(c.key)} className="text-left px-4 py-3 font-medium" style={{ width: c.width }}>
                     {c.label}
                   </th>
-                ))}
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {rows.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50">
-                  {columns.map((c) => (
+                  ))}
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {rows.map((row) => (
+                  <tr key={row.id} className="hover:bg-gray-50">
+                    {columns.map((c) => (
                     <td key={String(c.key)} className="px-4 py-3 text-gray-800">
                       {c.render ? c.render(row) : String((row as Record<string, unknown>)[c.key as string] ?? "—")}
                     </td>
                   ))}
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
                       onClick={() => setEditing(row)}
                       className="text-gray-500 hover:text-primary mr-2"
                       title="Modifier"
                     >
-                      <Pencil size={16} />
-                    </button>
-                    <button
+                        <Pencil size={16} />
+                      </button>
+                      <button
                       onClick={() => handleDelete(row.id)}
                       className="text-gray-500 hover:text-red-600"
                       title="Supprimer"
                     >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Mobile cards (< lg) */}
+            <div className="lg:hidden divide-y divide-gray-100">
+              {rows.map((row) => {
+                const primaryCol =
+                  columns.find((c) => !c.width) ?? columns[0];
+                const restCols = columns.filter(
+                  (c) => String(c.key) !== String(primaryCol.key)
+                );
+                const primaryValue = primaryCol.render
+                  ? primaryCol.render(row)
+                  : String((row as Record<string, unknown>)[primaryCol.key as string] ?? "—");
+                return (
+                  <div key={row.id} className="p-4 bg-white space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-semibold text-secondary line-clamp-2 min-w-0">
+                        {primaryValue}
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => setEditing(row)}
+                          className="text-gray-400 hover:text-primary p-1"
+                          aria-label="Modifier"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(row.id)}
+                          className="text-gray-400 hover:text-red-600 p-1"
+                          aria-label="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    {restCols.length > 0 && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                        {restCols.map((c) => (
+                          <span key={String(c.key)} className="min-w-0">
+                            <span className="text-gray-400">{c.label}:</span>{" "}
+                            <span className="text-gray-600">
+                              {c.render
+                                ? c.render(row)
+                                : String((row as Record<string, unknown>)[c.key as string] ?? "—")}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -330,11 +386,11 @@ function FormModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center sm:p-4">
+      <div className="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl w-full sm:max-w-3xl max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-secondary">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100">
             <X size={20} />
           </button>
         </div>
@@ -343,7 +399,7 @@ function FormModal({
             e.preventDefault();
             onSave(values);
           }}
-          className="p-6 space-y-6"
+          className="p-4 sm:p-6 space-y-6"
         >
           {groups.map((g, gi) => {
             const visible = g.items.filter((f) => !f.hidden);
@@ -361,18 +417,18 @@ function FormModal({
               </fieldset>
             );
           })}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="w-full sm:w-auto px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="bg-primary text-white px-5 py-2 rounded-lg hover:brightness-110 flex items-center gap-2 disabled:opacity-60"
+              className="w-full sm:w-auto bg-primary text-white px-5 py-2.5 rounded-lg hover:brightness-110 flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {saving && <Loader2 size={16} className="animate-spin" />}
               Enregistrer
