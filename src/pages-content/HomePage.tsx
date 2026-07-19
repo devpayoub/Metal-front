@@ -23,7 +23,7 @@ import { CtaSection } from "@/components/sections/CtaSection";
 import { GridOverlay } from "@/components/sections/GridOverlay";
 import { listPublishedFeedbacks } from "@/hooks/useFeedback";
 
-const HOME_TESTIMONIALS = [
+const HOME_TESTIMONIALS_FALLBACK = [
   { name: "Mohamed Ben Salah", company: "SFBT", feedback: "Une équipe d'une rigueur exemplaire. Le chantier a été livré dans les temps avec une qualité de soudure et de finition irréprochable." },
   { name: "Sonia Trabelsi", company: "Ennakl Automobiles", feedback: "Le montage a été réalisé sans interruption de notre activité. Professionnalisme, propreté et respect des engagements." },
   { name: "Karim Haddad", company: "IMM", feedback: "Du bureau d'études à la pose, tout a été maîtrisé en interne. Les plans étaient précis et la structure parfaitement conforme aux normes." },
@@ -340,14 +340,15 @@ export function HomePage() {
       {/* ========================= TESTIMONIALS ========================= */}
       <TestimonialsSection
         variant="compact"
-        testimonials={[
-          ...HOME_TESTIMONIALS,
-          ...feedbacks.map<Testimonial>((f) => ({
-            name: f.name,
-            company: f.company ?? "Client MIS",
-            feedback: f.description,
-          })),
-        ]}
+        testimonials={
+          feedbacks.length > 0
+            ? feedbacks.map<Testimonial>((f) => ({
+                name: f.name,
+                company: f.company ?? "Client MIS",
+                feedback: f.description,
+              }))
+            : HOME_TESTIMONIALS_FALLBACK
+        }
       />
 
       {/* ====================== LETTRES (GRID) ====================== */}

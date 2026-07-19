@@ -168,6 +168,7 @@ export type Feedback = {
   name: string;
   company: string | null;
   description: string;
+  email: string;
   email_verified: boolean;
   published: boolean;
   created_at: string;

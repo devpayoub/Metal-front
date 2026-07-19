@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
@@ -66,16 +66,31 @@ export function CrudTable<T extends { id: string }>({
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // StrictMode/dev mounts the component twice, so `load()` can race. Each
+  // call increments this token; only the latest call's response is allowed
+  // to call setRows, so stale fetches can't overwrite a fresh list.
+  const loadReqRef = useRef(0);
+
   const load = async () => {
+    const reqId = ++loadReqRef.current;
     setLoading(true);
     try {
       const path = listPath || `/api/${resource}`;
       const data = await api.get<Record<string, T[]>>(path, true);
-      setRows(data[listKey] || []);
+      if (reqId !== loadReqRef.current) return; // a newer request superseded us
+      const list = data[listKey] || [];
+      // Defensive dedupe by id in case anything upstream duplicated rows.
+      const seen = new Set<string>();
+      const deduped = list.filter((row) => {
+        if (seen.has(row.id)) return false;
+        seen.add(row.id);
+        return true;
+      });
+      setRows(deduped);
     } catch (e) {
-      toast.error((e as Error).message);
+      if (reqId === loadReqRef.current) toast.error((e as Error).message);
     } finally {
-      setLoading(false);
+      if (reqId === loadReqRef.current) setLoading(false);
     }
   };
 
@@ -90,11 +105,28 @@ export function CrudTable<T extends { id: string }>({
       const payload = coerce(values, fields);
       if (editing) {
         const data = await api.put<Record<string, T>>(`/api/${resource}/${editing.id}`, payload);
-        setRows((r) => r.map((row) => (row.id === editing.id ? data[itemKey] : row)));
+        const updated = data[itemKey];
+        if (!updated) {
+          // Backend didn't echo the row — reload to stay in sync.
+          load();
+        } else {
+          setRows((r) =>
+            r.some((row) => row.id === updated.id)
+              ? r.map((row) => (row.id === updated.id ? updated : row))
+              : [updated, ...r.filter((row) => row.id !== editing.id)]
+          );
+        }
         toast.success("Mis à jour");
       } else {
         const data = await api.post<Record<string, T>>(`/api/${resource}`, payload, true);
-        setRows((r) => [data[itemKey], ...r]);
+        const created = data[itemKey];
+        if (!created) {
+          load(); // don't know what was saved — refresh
+        } else {
+          setRows((r) =>
+            r.some((row) => row.id === created.id) ? r : [created, ...r]
+          );
+        }
         toast.success("Créé");
       }
       setEditing(null);

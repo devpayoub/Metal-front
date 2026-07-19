@@ -11,6 +11,7 @@ import {
   Tag,
   Layers,
   Mail,
+  MessageSquare,
   Settings,
   LogOut,
   Home,
@@ -26,6 +27,7 @@ const nav = [
   { href: "/admin/categories", label: "Catégories", icon: Tag },
   { href: "/admin/materials", label: "Matériaux", icon: Layers },
   { href: "/admin/thanks", label: "Lettres de remerciement", icon: Mail },
+  { href: "/admin/feedback", label: "Retours clients", icon: MessageSquare },
   { href: "/admin/settings", label: "Paramètres", icon: Settings },
 ];
 
